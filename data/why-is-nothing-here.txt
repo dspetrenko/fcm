@@ -1,0 +1,9 @@
+Data is big enough: 
+	dataset         | # files  | size
+    --------------------------------------
+	train_features  |  189078  | 215.9GB
+	test_features   |   63348  |  73.0GB
+	train_agbm      |    8689  |   2.1GB
+
+So, you could find official guide to extract data on this page: https://www.drivendata.org/competitions/99/biomass-estimation/data/
+
