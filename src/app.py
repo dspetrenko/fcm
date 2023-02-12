@@ -1,6 +1,10 @@
 import os.path
 from typing import List
 
+from dotenv import load_dotenv
+load_dotenv('.env')
+
+
 from fastapi import FastAPI, Request, Response, Depends
 from sqlalchemy.orm import Session
 
