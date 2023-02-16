@@ -7,6 +7,10 @@ import rasterio
 import torch
 import numpy as np
 
+import warnings
+warnings.filterwarnings("ignore", category=rasterio.errors.NotGeoreferencedWarning)
+
+
 DATA_ROOT = r'/data/driven_data_bio_massters'
 DATA_TARGET_ROOT = os.path.join(DATA_ROOT, 'train_agbm')
 DATA_FEATURES_ROOT = os.path.join(DATA_ROOT, 'train_features')
