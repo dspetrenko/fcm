@@ -3,6 +3,7 @@ import os
 
 from typing import List
 
+import tqdm
 import rasterio
 import torch
 import numpy as np
@@ -79,3 +80,48 @@ def get_pixel_target_tensor(chip: str):
     pixel_target_tensor = pixel_target_tensor.flatten(start_dim=0, end_dim=1)
 
     return pixel_target_tensor
+
+
+def get_batch(batch_chips, samples_from_chip: int = 1_000, target: bool = True):
+    batch_data = []
+    batch_data_target = []
+    # ds: its slow enough : 20 secs for 100 chips : Could read and build pixel_tensors as multiprocessing task
+    for chip in batch_chips:
+        chip_files = get_chip_files(chip, s2=False)
+        chip_tensor = get_chip_tensor(chip_files)
+
+        pixel_tensor = chip_tensor_to_pixel_tensor(chip_tensor)
+        shufled_indexes = torch.randperm(len(pixel_tensor))
+        batch_data.append(pixel_tensor[shufled_indexes[:samples_from_chip]])
+
+        if target:
+            target_pixel_tensor = get_pixel_target_tensor(chip)
+            batch_data_target.append(target_pixel_tensor[shufled_indexes[:samples_from_chip]])
+
+    batch = torch.stack(batch_data)
+    batch = batch.flatten(start_dim=0, end_dim=1)
+
+    if not target:
+        return batch, None
+
+    batch_target = torch.stack(batch_data_target)
+    batch_target = batch_target.flatten(start_dim=0, end_dim=1)
+
+    # TODO: ds: lock random state!
+    return batch, batch_target
+
+
+def generate_processed_file(chips: List[str], chip_batch_size: int = 100, samples_from_chip: int = 1000):
+
+    batches = []
+
+    length = len(chips)
+    for i in range(0, length, chip_batch_size):
+        _batch = chips[i: min(i + chip_batch_size, length)]
+        batches.append(_batch)
+
+    for idx, batch_chips in enumerate(tqdm.auto.tqdm(batches)):
+        batch, batch_target = get_batch(batch_chips, samples_from_chip=samples_from_chip)
+
+        torch.save(batch, rf'../data/processed/batch-{idx:03}-features.pt')
+        torch.save(batch_target, rf'../data/processed/batch-{idx:03}-target.pt')
