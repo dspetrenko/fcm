@@ -7,6 +7,7 @@ import tqdm
 import rasterio
 import torch
 import numpy as np
+from joblib import Parallel, delayed
 
 import warnings
 warnings.filterwarnings("ignore", category=rasterio.errors.NotGeoreferencedWarning)
@@ -121,8 +122,13 @@ def generate_processed_files(chips: List[str], split: Literal['train', 'val'],
         _batch = chips[i: min(i + chip_batch_size, length)]
         batches.append(_batch)
 
-    for idx, batch_chips in enumerate(tqdm.auto.tqdm(batches)):
-        batch, batch_target = get_batch(batch_chips, samples_from_chip=samples_from_chip)
+    def gen_batch_file(batch_chips, idx):
 
-        torch.save(batch, rf'../data/processed/{split}/batch-{idx:03}-features.pt')
-        torch.save(batch_target, rf'../data/processed/{split}/batch-{idx:03}-target.pt')
+        batch, batch_target = get_batch(batch_chips, samples_from_chip=1_000)
+
+        torch.save(batch, rf'../data/processed/{split}/batch-{idx:06}-features.pt')
+        torch.save(batch_target, rf'../data/processed/{split}/batch-{idx:06}-target.pt')
+
+    task_gen = ((_chips, _idx) for _chips, _idx in zip(batches, range(len(batches))))
+    _ = Parallel(backend='loky', n_jobs=-1)(
+        delayed(gen_batch_file)(_chips, _idx) for (_chips, _idx) in tqdm.auto.tqdm(task_gen, total=len(batches)))
