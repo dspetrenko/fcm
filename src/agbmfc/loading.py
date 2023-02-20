@@ -1,7 +1,7 @@
 import glob
 import os
 
-from typing import List
+from typing import List, Literal
 
 import tqdm
 import rasterio
@@ -111,7 +111,8 @@ def get_batch(batch_chips, samples_from_chip: int = 1_000, target: bool = True):
     return batch, batch_target
 
 
-def generate_processed_file(chips: List[str], chip_batch_size: int = 100, samples_from_chip: int = 1000):
+def generate_processed_files(chips: List[str], split: Literal['train', 'val'],
+                             chip_batch_size: int = 100, samples_from_chip: int = 1_000):
 
     batches = []
 
@@ -123,5 +124,5 @@ def generate_processed_file(chips: List[str], chip_batch_size: int = 100, sample
     for idx, batch_chips in enumerate(tqdm.auto.tqdm(batches)):
         batch, batch_target = get_batch(batch_chips, samples_from_chip=samples_from_chip)
 
-        torch.save(batch, rf'../data/processed/batch-{idx:03}-features.pt')
-        torch.save(batch_target, rf'../data/processed/batch-{idx:03}-target.pt')
+        torch.save(batch, rf'../data/processed/{split}/batch-{idx:03}-features.pt')
+        torch.save(batch_target, rf'../data/processed/{split}/batch-{idx:03}-target.pt')
