@@ -43,3 +43,32 @@ def evaluate(model, val_dataloader, device):
 
     mean_loss = np.mean(loss_buffer.cpu().detach().numpy())
     return mean_loss
+
+
+def train_one_epoch(model, train_dataloader, optimizer, epoch, device="cuda:0", ):
+    model.train()
+
+    loss_buffer = torch.empty(0)
+    #     all_predictions = torch.empty(0)
+    #     all_targets = torch.empty(0)
+
+    for batch, target in tqdm(train_dataloader, desc=f'training batch: epoch - {epoch}'):
+        batch = batch[0]
+        target = target[0]
+        batch, target = batch.to(device), target.to(device)
+        #         all_targets = torch.cat((all_targets.cpu(), target.cpu()))
+        ddict = dict()
+        ddict["bands"] = batch
+        prediction = model(ddict)[:, 0]
+
+        loss = model.loss_fn(target, prediction)
+
+        loss.backward()
+        optimizer.step()
+        optimizer.zero_grad()
+
+        loss_buffer = torch.cat((loss_buffer.cpu(), loss.cpu().unsqueeze(0)))
+
+    mean_loss = np.mean(loss_buffer.cpu().detach().numpy())
+    return mean_loss
+
