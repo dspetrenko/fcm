@@ -1,3 +1,5 @@
+from typing import Union
+
 import numpy as np
 import torch
 import torch.nn.functional as F
@@ -85,3 +87,11 @@ def inference(model: torch.nn.Module, chip_tensor):
         prediction = model(ddict)[:, 0].reshape(256, 256)
 
     return prediction
+
+
+def pickup_model(path: Union[str, None]) -> torch.nn.Module:
+    if path is None:
+        path = r'models/trivial-model.pt'
+
+    model = torch.load(path)
+    return model
