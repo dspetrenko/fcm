@@ -3,6 +3,8 @@ import torch
 import torch.nn.functional as F
 from tqdm.auto import tqdm
 
+from src.agbmfc.loading import chip_tensor_to_pixel_tensor
+
 
 class TrivialPixelRegressor(torch.nn.Module):
     def __init__(self, prediction=0):
@@ -72,3 +74,14 @@ def train_one_epoch(model, train_dataloader, optimizer, epoch, device="cuda:0", 
     mean_loss = np.mean(loss_buffer.cpu().detach().numpy())
     return mean_loss
 
+
+def inference(model: torch.nn.Module, chip_tensor):
+    pixel_tensor = chip_tensor_to_pixel_tensor(chip_tensor)
+    model.eval()
+    with torch.no_grad():
+        ddict = {
+            'bands': pixel_tensor,
+        }
+        prediction = model(ddict)[:, 0].reshape(256, 256)
+
+    return prediction
