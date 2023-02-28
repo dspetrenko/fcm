@@ -19,5 +19,10 @@ for file in files:
 
 r = requests.post(END_POINT, files=multiple_files)
 
-print(r.status_code)
-print(r.content)
+if r.status_code == 200:
+    with open('response.tif', 'wb') as fd:
+        fd.write(r.content)
+
+    print('response code: 200 - response content saved to response.tif')
+else:
+    print(f'response code: {r.status_code} - something went wrong')
