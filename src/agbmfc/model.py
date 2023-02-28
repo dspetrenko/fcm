@@ -77,7 +77,7 @@ def train_one_epoch(model, train_dataloader, optimizer, epoch, device="cuda:0", 
     return mean_loss
 
 
-def inference(model: torch.nn.Module, chip_tensor):
+def inference(model: torch.nn.Module, chip_tensor) -> torch.Tensor:
     pixel_tensor = chip_tensor_to_pixel_tensor(chip_tensor)
     model.eval()
     with torch.no_grad():
