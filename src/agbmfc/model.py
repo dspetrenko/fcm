@@ -1,4 +1,4 @@
-from typing import Union
+from typing import Optional, Literal
 
 import numpy as np
 import torch
@@ -89,9 +89,14 @@ def inference(model: torch.nn.Module, chip_tensor):
     return prediction
 
 
-def pickup_model(path: Union[str, None]) -> torch.nn.Module:
-    if path is None:
-        path = r'models/trivial-model.pt'
+def pickup_model(model_kind: Optional[Literal['trivial']] = 'trivial') -> torch.nn.Module:
 
-    model = torch.load(path)
+    if model_kind == 'trivial':
+        path_weights = r'models/trivial-model.pt'
+        model = TrivialPixelRegressor()
+
+    else:
+        raise ValueError(f'unknown model_kind passed: {model_kind}')
+
+    model = torch.load(path_weights)
     return model
