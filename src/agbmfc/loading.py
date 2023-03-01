@@ -38,9 +38,6 @@ def read_image_tensor(file_path: str, precision: int = 32, device: str = 'cpu'):
 
 
 def get_chip_tensor(chip_files: List[str], precision: int = 32, device: str = 'cpu'):
-    if len(chip_files) != 12:
-        # ds: for s2 it will be big problem: s2 contain a lot of missed data
-        raise ValueError(f'found exactly 12 files, but got: {len(chip_files)}')
 
     # we use sorted to produce order of our images, because we checked that name defines position
     chip_tensors = [read_image_tensor(path, precision=precision, device=device) for path in sorted(chip_files)]
