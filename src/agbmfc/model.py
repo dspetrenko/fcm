@@ -40,7 +40,7 @@ def evaluate(model, val_dataloader, device):
             ddict = {
                 'bands': batch
             }
-            prediction = model(ddict)[:, 0]
+            prediction = model(ddict)
 
             loss = model.loss_fn(target, prediction)
             loss_buffer = torch.cat((loss_buffer.cpu(), loss.cpu().unsqueeze(0)))
@@ -63,7 +63,7 @@ def train_one_epoch(model, train_dataloader, optimizer, epoch, device="cuda:0", 
         #         all_targets = torch.cat((all_targets.cpu(), target.cpu()))
         ddict = dict()
         ddict["bands"] = batch
-        prediction = model(ddict)[:, 0]
+        prediction = model(ddict)
 
         loss = model.loss_fn(target, prediction)
 
