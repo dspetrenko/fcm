@@ -49,16 +49,16 @@ def evaluate(model, val_dataloader, device):
     return mean_loss
 
 
-def train_one_epoch(model, train_dataloader, optimizer, epoch, device="cuda:0", ):
+def train_one_epoch(model, train_dataloader, optimizer, epoch, device="cuda:0", ) -> list:
     model.train()
 
-    loss_buffer = torch.empty(0)
-    #     all_predictions = torch.empty(0)
-    #     all_targets = torch.empty(0)
-
+    losses = []
     for batch, target in tqdm(train_dataloader, desc=f'training batch: epoch - {epoch}'):
-        batch = batch[0]
-        target = target[0]
+
+        a, b, sq, ch = batch.shape
+        batch = batch.reshape(-1, sq, ch)
+        target = target.reshape(-1)
+
         batch, target = batch.to(device), target.to(device)
         #         all_targets = torch.cat((all_targets.cpu(), target.cpu()))
         ddict = dict()
@@ -71,10 +71,9 @@ def train_one_epoch(model, train_dataloader, optimizer, epoch, device="cuda:0", 
         optimizer.step()
         optimizer.zero_grad()
 
-        loss_buffer = torch.cat((loss_buffer.cpu(), loss.cpu().unsqueeze(0)))
+        losses.append(loss.item())
 
-    mean_loss = np.mean(loss_buffer.cpu().detach().numpy())
-    return mean_loss
+    return losses
 
 
 def inference(model: torch.nn.Module, chip_tensor) -> torch.Tensor:
