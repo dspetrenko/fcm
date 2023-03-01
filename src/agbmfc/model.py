@@ -30,11 +30,12 @@ class TrivialPixelRegressor(torch.nn.Module):
 def evaluate(model, val_dataloader, device):
     model.eval()
 
-    loss_buffer = torch.empty(0)
+    loss_buffer = []
     with torch.no_grad():
         for batch, target in tqdm(val_dataloader, desc=f'evaluation'):
-            batch = batch[0]
-            target = target[0]
+            a, b, sq, ch = batch.shape
+            batch = batch.reshape(-1, sq, ch)
+            target = target.reshape(-1)
             batch, target = batch.to(device), target.to(device)
 
             ddict = {
@@ -42,10 +43,10 @@ def evaluate(model, val_dataloader, device):
             }
             prediction = model(ddict)
 
-            loss = model.loss_fn(target, prediction)
-            loss_buffer = torch.cat((loss_buffer.cpu(), loss.cpu().unsqueeze(0)))
+            loss = model.loss_fn(target, prediction).item()
+            loss_buffer.append(loss)
 
-    mean_loss = np.mean(loss_buffer.cpu().detach().numpy())
+    mean_loss = np.mean(loss_buffer)
     return mean_loss
 
 
