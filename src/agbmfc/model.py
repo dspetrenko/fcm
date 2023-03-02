@@ -20,11 +20,43 @@ class TrivialPixelRegressor(torch.nn.Module):
 
         return logits
 
-    def loss_fn(self, x, target):
-        x_ = x[:, 0]
-        y_ = target
-        loss = torch.sqrt(F.mse_loss(x_, y_, reduction="none") + 1e-8).mean()
+    @staticmethod
+    def loss_fn(prediction, target):
+        # print('x.shape', x.shape)
+        loss = torch.sqrt(F.mse_loss(prediction, target, reduction="none") + 1e-8).mean()
+
         return loss
+
+
+class PixelBLRegressor(TrivialPixelRegressor):
+    def __init__(self, dim=256, seq_len=12, channels=4):
+        super().__init__()
+
+        self.dim = dim
+        self.seq_len = seq_len
+        self.channels = channels
+
+        self.s1_band = torch.nn.Linear(channels, self.dim)
+        self.s1_pos_embedding = torch.nn.Embedding(self.seq_len, self.dim)
+
+        encoder_layer = torch.nn.TransformerEncoderLayer(d_model=self.dim, nhead=8, batch_first=True)
+        self.encoder = torch.nn.TransformerEncoder(encoder_layer, num_layers=4)
+        self.regressor = torch.nn.Linear(self.dim, 1)
+
+    def forward(self, ddict):
+        _device = next(self.parameters()).device
+
+        features = self.s1_band(ddict["bands"] / 100)
+
+        bs = len(ddict["bands"])
+        orders = torch.arange(12).repeat(bs).reshape((bs, self.seq_len)).to(_device)
+        pos_emb = self.s1_pos_embedding(orders)
+
+        assert features.shape == pos_emb.shape
+        out = self.encoder(features + pos_emb)
+        logits = self.regressor(out).squeeze(2)
+
+        return logits[:, 0]
 
 
 def evaluate(model, val_dataloader, device):
