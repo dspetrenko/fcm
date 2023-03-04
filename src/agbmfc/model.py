@@ -121,7 +121,7 @@ def inference(model: torch.nn.Module, chip_tensor) -> torch.Tensor:
         ddict = {
             'bands': pixel_tensor,
         }
-        prediction = model(ddict)[:, 0].reshape(256, 256)
+        prediction = model(ddict).reshape(256, 256)
 
     return prediction
 
@@ -156,14 +156,18 @@ def train(model, train_dataloader, val_dataloader, optimizer, device="cuda:0", n
         yield report
 
 
-def pickup_model(model_kind: Optional[Literal['trivial']] = 'trivial') -> torch.nn.Module:
+def pickup_model(model_kind: Optional[Literal['trivial', 'baseline-pixel']] = 'trivial') -> torch.nn.Module:
 
     if model_kind == 'trivial':
         path_weights = r'models/trivial-model.pt'
         model = TrivialPixelRegressor()
 
+    elif model_kind == 'baseline-pixel':
+        path_weights = r'models/baseline-pixel-model.pt'
+        model = PixelBLRegressor()
+
     else:
         raise ValueError(f'unknown model_kind passed: {model_kind}')
 
-    model = torch.load(path_weights)
+    #  TODO:   check if it exist and load or return empty model
     return model

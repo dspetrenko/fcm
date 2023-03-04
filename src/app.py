@@ -50,7 +50,7 @@ async def get_users(db: Session = Depends(get_db)):
 
 @app.post(r'/agbmfc/inference')
 async def inference(chip_files: list[UploadFile]):
-    model = pickup_model()
+    model = pickup_model('baseline-pixel')
 
     mem_files = [MemoryFile(await file_data.read()) for file_data in sorted(chip_files, key=lambda x: x.filename)]
     chip_tensors = [read_image_tensor(mf) for mf in mem_files]
