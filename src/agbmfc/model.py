@@ -1,4 +1,5 @@
 from typing import Optional, Literal
+from collections import namedtuple
 
 import numpy as np
 import torch
@@ -6,6 +7,10 @@ import torch.nn.functional as F
 from tqdm.auto import tqdm
 
 from src.agbmfc.loading import chip_tensor_to_pixel_tensor
+
+
+TrainReport = namedtuple('TrainReport',
+                         ['train_loss_log', 'val_loss_log', 'last_epoch_loss_val', 'last_epoch_loss_train'])
 
 
 class TrivialPixelRegressor(torch.nn.Module):
@@ -119,6 +124,36 @@ def inference(model: torch.nn.Module, chip_tensor) -> torch.Tensor:
         prediction = model(ddict)[:, 0].reshape(256, 256)
 
     return prediction
+
+
+def train(model, train_dataloader, val_dataloader, optimizer, device="cuda:0", n_epochs=10, scheduler=None):
+    # TODO: add saving model
+
+    model.to(device)
+
+    train_loss_log = []
+    val_loss_log = {
+        'idx': [],
+        'value': [],
+    }
+
+    for epoch in tqdm(range(n_epochs), ):
+        epoch_losses = train_one_epoch(model, train_dataloader, optimizer, epoch, device)
+        #         print(f'{epoch} - epoch_losses', epoch_losses )
+        scheduler.step()
+        train_loss_log.extend(epoch_losses)
+
+        val_loss = evaluate(model, val_dataloader, device)
+        val_loss_log['idx'].append(len(train_loss_log) - 1)
+        val_loss_log['value'].append(val_loss)
+
+        torch.save(train_loss_log, 'train_loss_log.pt')
+        torch.save(val_loss_log, 'val_loss_log.pt')
+
+        report = TrainReport(train_loss_log=train_loss_log, val_loss_log=val_loss_log,
+                             last_epoch_loss_train=np.mean(epoch_losses), last_epoch_loss_val=val_loss)
+
+        yield report
 
 
 def pickup_model(model_kind: Optional[Literal['trivial']] = 'trivial') -> torch.nn.Module:
