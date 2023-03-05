@@ -34,6 +34,24 @@ INFO:     Uvicorn running on http://127.0.0.1:8000 (Press CTRL+C to quit)
 ```
 
 
-# How to check:
+## How to check:
 * visit localhost:8000/echo or localhost:8000/docs# 
 * send get request via curl ```curl  {"Hello, diploma!"} localhost:8000/echo```
+
+---
+# How to run using docker compose
+
+1. create `.env` file. See `.env_example` for a reference
+2. build and run services:
+```commandline
+    docker compose build
+    docker compose up
+``` 
+## How to check:
+Simplest way is to use `curl` (Or you can visit a docs page `localhost:8000/docs#`)
+```commandline
+    curl localhost:8000/users/ -H 'accept: application/json'
+``` 
+
+**Note**: keep in mind that if you run it first time user table will be empty
+
