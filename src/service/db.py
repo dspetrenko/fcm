@@ -8,7 +8,7 @@ from sqlalchemy.orm import sessionmaker
 _DATABASE_USER = os.getenv('POSTGRES_USER', 'unknown')
 _DATABASE_PASSWORD = os.getenv('POSTGRES_PASSWORD', 'unknown_pass')
 _DATABASE_DB = os.getenv('POSTGRES_DB', 'unknown_pg')
-_DATABASE_HOST = os.getenv('DB_HOST', 'unknown_host')
+_DATABASE_HOST = os.getenv('POSTGRES_HOST', 'unknown_host')
 
 if _DATABASE_USER == 'unknown':
     # we didn't pick up .env file, so it mean that we runs loacally as 'python db.py' command
