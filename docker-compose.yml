@@ -17,6 +17,7 @@ services:
   app:
     depends_on:
       - db
+      - redis
     links:
       - db:db
     networks:
@@ -28,6 +29,47 @@ services:
       - 8000
     env_file:
       - .env
+    environment:
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis:6379/0
+
+  redis:
+    image: redis:6-alpine
+    expose:
+      - 6379
+    networks:
+      - agbm_net
+
+  worker:
+    build: .
+    command: ['celery', '--app=src.worker.celery_worker', 'worker', '-l', 'info']
+    environment:
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis:6379/0
+    depends_on:
+      - redis
+      - app
+    networks:
+      - agbm_net
+    expose:
+      - 6379
+      - 5555
+
+  flower:
+    image: mher/flower
+    environment:
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis:6379/0
+    depends_on:
+      - redis
+      - worker
+    networks:
+      - agbm_net
+    ports:
+      - "5555:5555"
+    expose:
+      - 6379
+      - 5555
 
 networks:
   agbm_net:
