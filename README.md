@@ -55,3 +55,36 @@ Simplest way is to use `curl` (Or you can visit a docs page `localhost:8000/docs
 
 **Note**: keep in mind that if you run it first time user table will be empty
 
+# How to check if creation inference task works properly
+
+1. init `/data_sample` folder (To avoid monkey job we will use the simplest scripts)
+```commandline
+$ python -m src.utils.init_data_samples
+```
+2. create a task for inference
+```commandline
+$ python -m src.utils.client_inference_task
+files:
+         fed6bb57_S1_00.tif
+         fed6bb57_S1_01.tif
+         fed6bb57_S1_02.tif
+         fed6bb57_S1_03.tif
+         fed6bb57_S1_04.tif
+         fed6bb57_S1_05.tif
+         fed6bb57_S1_06.tif
+         fed6bb57_S1_07.tif
+         fed6bb57_S1_08.tif
+         fed6bb57_S1_09.tif
+         fed6bb57_S1_10.tif
+         fed6bb57_S1_11.tif
+--------------------------------------------------
+fb38b477-1add-481e-9bc4-243f4c7f28a1
+```
+3. get result from task (keep attention: we will use task id printed in the last line)
+```commandline
+$ python -m src.utils.client_inference_result -i fb38b477-1add-481e-9bc4-243f4c7f28a1
+response code: 200 - response content saved to response.tif
+```
+You should find a `response.tif` file in your folder. (Keep calm. I's ok if you see nothing in `response.tif`. I just switched off model to save some resources)
+
+4. bonus: There is a flower in the docker-compose.yml. So, you could visit [localhost:5555](http://localhost:5555)
