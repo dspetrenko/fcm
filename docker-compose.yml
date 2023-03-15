@@ -90,6 +90,10 @@ services:
       - "3000:3000"
     expose:
       - 3000
+    depends_on:
+      - prometheus
+    volumes:
+      - ./grafana/provisioning/:/etc/grafana/provisioning/
     networks:
       agbm_net:
 
