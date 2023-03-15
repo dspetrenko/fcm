@@ -71,6 +71,28 @@ services:
       - 6379
       - 5555
 
+  prometheus:
+    image: prom/prometheus
+    depends_on:
+      - app
+    ports :
+      - "9090:9090"
+    expose:
+      - 9090
+    networks:
+      agbm_net:
+
+  grafana:
+    image: grafana/grafana
+    env_file:
+      - .env
+    ports:
+      - "3000:3000"
+    expose:
+      - 3000
+    networks:
+      agbm_net:
+
 networks:
   agbm_net:
     driver: bridge
