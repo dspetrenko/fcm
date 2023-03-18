@@ -101,6 +101,20 @@ services:
     networks:
       agbm_net:
 
+  pg-exporter:
+    image: prometheuscommunity/postgres-exporter
+    depends_on:
+      - prometheus
+    expose:
+      - 5432
+      - 9187
+    ports:
+      - "9187:9187"
+    env_file:
+      - .env
+    networks:
+      agbm_net:
+
   node-exporter:
     image: quay.io/prometheus/node-exporter:latest
     volumes:
@@ -122,7 +136,6 @@ services:
       - agbm_net
     deploy:
       mode: global
-
 
   grafana:
     image: grafana/grafana
