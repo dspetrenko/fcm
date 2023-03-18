@@ -79,6 +79,9 @@ services:
       - "9090:9090"
     expose:
       - 9090
+    command: --config.file=/etc/prometheus/prometheus.yml
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
     networks:
       agbm_net:
 
