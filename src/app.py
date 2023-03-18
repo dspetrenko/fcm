@@ -6,10 +6,14 @@ import numpy as np
 from dotenv import load_dotenv
 from starlette.responses import JSONResponse
 
+from src import monitoring
+
 load_dotenv('.env')
 
 from fastapi import FastAPI, Request, Response, Depends, UploadFile
 from sqlalchemy.orm import Session
+
+import prometheus_client
 
 import torch
 from rasterio.io import MemoryFile
@@ -28,6 +32,7 @@ DATA_PATH = os.path.join('..', 'data')
 PROJECT_TITLE = "Project to solve problem of AGB estimation on satellite images"
 PROJECT_DESC = "This project is a diploma work. "
 
+
 Base.metadata.create_all(bind=engine)
 
 app = FastAPI(title=PROJECT_TITLE, description=PROJECT_DESC)
@@ -41,6 +46,7 @@ def get_db():
         db.close()
 
 
+@monitoring.METRIC_STORAGE['echo_request_duration'].time()
 @app.route('/echo')
 async def hello(request: Request):
     body = await request.body()
@@ -84,11 +90,15 @@ async def inference_task(chip_files: list[UploadFile], model_type: Literal['triv
 
     task = create_inference_task.delay(image_tensor.numpy().tolist(), model_type)
 
+    monitoring.METRIC_STORAGE['created_inference_tasks'].inc()
     return JSONResponse({'task_id': task.id})
 
 
 @app.get('/agbmfc/inference/result')
 async def inference_result(task_id: str):
+
+    monitoring.METRIC_STORAGE['requests_to_fetch_inference_result'].inc()
+
     result = celery_worker.AsyncResult(task_id)
     prediction = result.get()
 
@@ -99,3 +109,15 @@ async def inference_result(task_id: str):
 
     response = Response(img_bytes, media_type='image/tiff')
     return response
+
+
+@app.route('/metrics/')
+def metrics(request: Request):
+    res = prometheus_client.generate_latest()
+
+    # app_res = []
+    # for metric, value in monitoring.METRIC_STORAGE.items():
+    #     app_res.append(prometheus_client.generate_latest(value))
+
+    # return Response(res + b''.join(app_res))
+    return Response(res)

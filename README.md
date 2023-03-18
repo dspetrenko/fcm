@@ -88,3 +88,32 @@ response code: 200 - response content saved to response.tif
 You should find a `response.tif` file in your folder. (Keep calm. I's ok if you see nothing in `response.tif`. I just switched off model to save some resources)
 
 4. bonus: There is a flower in the docker-compose.yml. So, you could visit [localhost:5555](http://localhost:5555)
+
+# Monitoring
+There are all needed stuff in the `docker-compose.yaml` to set up monitoring of the service: Prometheus, exporters, Grafana. 
+Followed objects in the service were added for monitoring:
+1. application 
+2. celery (via flower)
+3. celery via celery-exporter
+4. postgresql via postgresql-exporter
+5. host via host-exporter (Be carefully, if you are using windows on your host you will face fail. So the best way is to ~~migrate to linux~~ drop `node-exporter` from `docker-compose.yml` )
+
+## How to check monitoring
+
+1. run service in the docker compose manner:
+```commandline
+docker compose up --build
+```
+2. check if every exporter ready. Every of the listed uri should return you current status:
+   1. http://localhost:8000/metrics/
+   2. http://localhost:5555/metrics
+   3. http://localhost:9808/metrics
+   4. http://localhost:9187/metrics
+
+3. check if Prometheus scrape every of exports above. Visit http://localhost:9090/targets. Every target should be healthy.
+4. check if Grafana successfully connect to Prometheus. Visit http http://localhost:3000/dashboards. A few dashboards should be found: 
+   1. Application status - just one chart to proof that we successfully pick up metrics from our app
+   2. Celery / Tasks / By Task - show details about Celery. It could be empty if you haven't created inference task yet. (If it happened just pass `How to check if creation inference task works properly` section)
+   3. Docker Prometheus Monitoring - in progress now. It should show docker container metrics, but now just count how many exporters do we have
+   4. PostgresSQL Database - monitor Postgres. It works fine, but need a few minutes to load metrics.
+   

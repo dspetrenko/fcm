@@ -8,6 +8,7 @@ argParser.add_argument("-i", "--id", help="task id for task")
 args = argParser.parse_args()
 if args.id is None:
     print('Error: id is necessary')
+    exit()
 
 END_POINT = f'http://localhost:8000/agbmfc/inference/result?task_id={args.id}'
 print(END_POINT)
