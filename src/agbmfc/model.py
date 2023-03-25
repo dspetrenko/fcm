@@ -114,16 +114,30 @@ def train_one_epoch(model, train_dataloader, optimizer, epoch, device="cuda:0", 
     return losses
 
 
-def inference(model: torch.nn.Module, chip_tensor) -> torch.Tensor:
+def inference(model: torch.nn.Module, chip_tensor, batch_size: int = 10_000) -> torch.Tensor:
+    if batch_size < 0:
+        raise ValueError('Batch size must be zero or positive')
+
     pixel_tensor = chip_tensor_to_pixel_tensor(chip_tensor)
     model.eval()
     with torch.no_grad():
-        ddict = {
-            'bands': pixel_tensor,
-        }
-        prediction = model(ddict).reshape(256, 256)
+        if batch_size:
+            ...
+            preds = []
+            for batch_tensor in torch.split(pixel_tensor, batch_size, ):
+                ddict = {
+                    'bands': batch_tensor,
+                }
+                preds.append(model(ddict))
+            prediction = torch.cat(preds)
 
-    return prediction
+        else:
+            ddict = {
+                'bands': pixel_tensor,
+            }
+            prediction = model(ddict)
+
+    return prediction.reshape(256, 256)
 
 
 def train(model, train_dataloader, val_dataloader, optimizer, device="cuda:0", n_epochs=10, scheduler=None):
