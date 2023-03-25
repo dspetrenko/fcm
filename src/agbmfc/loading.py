@@ -17,6 +17,12 @@ DATA_ROOT = r'/data/driven_data_bio_massters'
 DATA_TARGET_ROOT = os.path.join(DATA_ROOT, 'train_agbm')
 DATA_FEATURES_ROOT = os.path.join(DATA_ROOT, 'train_features')
 
+MISSED_S2_CHIP_TENSOR = torch.zeros([11, 256, 256])
+MISSED_S2_CHIP_TENSOR[10] = 255  # broadcasts! broadcasts are everywhere!
+
+S1_EXPECTED_SHAPE = torch.Size([12, 4, 256, 256])
+S2_EXPECTED_SHAPE = torch.Size([12, 11, 256, 256])
+
 
 def read_image_tensor(file_path: str, precision: int = 32, device: str = 'cpu'):
 
@@ -37,10 +43,26 @@ def read_image_tensor(file_path: str, precision: int = 32, device: str = 'cpu'):
     return image_tensor
 
 
-def get_chip_tensor(chip_files: List[str], precision: int = 32, device: str = 'cpu'):
-
+def get_chip_tensor(chip_files: List[str], precision: int = 32, device: str = 'cpu', restore_missed=True):
+    chip_files = sorted(chip_files)
     # we use sorted to produce order of our images, because we checked that name defines position
-    chip_tensors = [read_image_tensor(path, precision=precision, device=device) for path in sorted(chip_files)]
+    chip_tensors = [read_image_tensor(path, precision=precision, device=device) for path in chip_files]
+
+    if restore_missed:
+        # missed_id_files = []
+
+        for season_idx in range(0, 12):
+            season_mask = f'_{season_idx:02}.'
+            #     print(season_mask)
+            chip_file = chip_files[season_idx]
+            if season_mask not in chip_file:
+                # print(season_mask, 'was missed')
+                missed_chip_file = chip_files[0][:-7] + season_mask + chip_files[0][-3:]
+                chip_files.insert(season_idx, missed_chip_file)
+                # missed_id_files.append((season_idx, missed_chip_file))
+
+                chip_tensors.insert(season_idx, MISSED_S2_CHIP_TENSOR)
+
     return torch.stack(chip_tensors)
 
 
@@ -59,9 +81,9 @@ def get_chip_files(chip: str, s1: bool = True, s2: bool = True):
 
 
 def chip_tensor_to_pixel_tensor(chip: torch.tensor):
-    expected_shape = torch.Size([12, 4, 256, 256])
-    if chip.shape != expected_shape:
-        raise ValueError(f'expected shape is {expected_shape}, but got {chip.shape}')
+
+    if not(chip.shape == S1_EXPECTED_SHAPE or chip.shape == S2_EXPECTED_SHAPE):
+        raise ValueError(f'expected shape is {S1_EXPECTED_SHAPE} or {S2_EXPECTED_SHAPE}, but got {chip.shape}')
 
     chip = torch.permute(chip, (2, 3, 0, 1))
     chip = chip.flatten(start_dim=0, end_dim=1)
@@ -85,7 +107,7 @@ def get_batch(batch_chips, samples_from_chip: int = 1_000, target: bool = True):
     batch_data_target = []
     # ds: its slow enough : 20 secs for 100 chips : Could read and build pixel_tensors as multiprocessing task
     for chip in batch_chips:
-        chip_files = get_chip_files(chip, s2=False)
+        chip_files = get_chip_files(chip, s1=False)
         chip_tensor = get_chip_tensor(chip_files)
 
         pixel_tensor = chip_tensor_to_pixel_tensor(chip_tensor)
