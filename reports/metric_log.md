@@ -3,4 +3,4 @@
 | 4c6a4a2e | Trivial     | 55.145504 | 67.2629 | Prediction is mean of target on processed train data                                                                                                         |
 | 1d8472d4 | Baseline TS | 54.078785 |         | Pixel ts on S1 data only. optimizer: SGD(lr=0.1, momentum=0.9), scheduler: StepLR(step_size=6, gamma=0.5), n_epoch, bs=1 chip                                |
 | 572494d5 | Baseline TS | 53.974094 |         | change batch_size: 1 -> 4                                                                                                                                    |
-| ed201505 | Baseline TS | 27.185242 | 42.7747 | Pixel ts on S2 data only. optimizer = optim.SGD(model.parameters(), lr=0.000_01, momentum=0.9), n_epoch=18, bs=1 chip. Missed data faked as zero and CLP=255 |
+| ed201505 | Baseline TS | 27.185242 | 42.7747 | Pixel ts on S2 data only. optimizer = optim.SGD(model.parameters(), lr=0.000_01, momentum=0.9), n_epoch=18, bs=4 chip. Missed data faked as zero and CLP=255 |
