@@ -102,7 +102,38 @@ def get_pixel_target_tensor(chip: str):
     return pixel_target_tensor
 
 
-def get_batch(batch_chips, samples_from_chip: int = 1_000, target: bool = True):
+def select_pixel_indexes(pixel_tensor, n_samples: int = 1_000, stratify=True, step: int = 100, step_count: int = 10):
+
+    if not stratify:
+        return torch.randperm(len(pixel_tensor))[:n_samples]
+
+    fl = pixel_tensor.flatten()
+
+    bins = [i * step for i in range(step_count + 1)]
+    bins.append(np.inf)
+
+    boundaries = []
+    for i in range(len(bins) - 1):
+        boundaries.append((bins[i], bins[i + 1]))
+
+    counts, _ = np.histogram(fl, bins)
+    n_samples_per_bin = (counts * n_samples / len(fl)).astype(int)
+
+    index_buffer = []
+    for bin_idx, (left_boundary, right_boundary) in enumerate(boundaries):
+        n_samples_in_bin = n_samples_per_bin[bin_idx]
+        if n_samples_in_bin == 0:
+            continue
+        bin_mask = (left_boundary <= fl) * (fl < right_boundary)
+        bin_indexes = torch.nonzero(bin_mask).flatten()
+
+        selected_idxs = torch.randperm(len(bin_indexes))[:n_samples_in_bin]
+        index_buffer.extend(selected_idxs)
+
+    return torch.stack(index_buffer)
+
+
+def get_batch(batch_chips, samples_from_chip: int = 1_000):
     batch_data = []
     batch_data_target = []
     # ds: its slow enough : 20 secs for 100 chips : Could read and build pixel_tensors as multiprocessing task
@@ -111,18 +142,14 @@ def get_batch(batch_chips, samples_from_chip: int = 1_000, target: bool = True):
         chip_tensor = get_chip_tensor(chip_files)
 
         pixel_tensor = chip_tensor_to_pixel_tensor(chip_tensor)
-        shufled_indexes = torch.randperm(len(pixel_tensor))
-        batch_data.append(pixel_tensor[shufled_indexes[:samples_from_chip]])
+        target_pixel_tensor = get_pixel_target_tensor(chip)
+        indexes = select_pixel_indexes(target_pixel_tensor, samples_from_chip)
+        batch_data.append(pixel_tensor[indexes])
 
-        if target:
-            target_pixel_tensor = get_pixel_target_tensor(chip)
-            batch_data_target.append(target_pixel_tensor[shufled_indexes[:samples_from_chip]])
+        batch_data_target.append(target_pixel_tensor[indexes])
 
     batch = torch.stack(batch_data)
     batch = batch.flatten(start_dim=0, end_dim=1)
-
-    if not target:
-        return batch, None
 
     batch_target = torch.stack(batch_data_target)
     batch_target = batch_target.flatten(start_dim=0, end_dim=1)
