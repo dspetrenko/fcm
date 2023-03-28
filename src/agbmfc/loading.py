@@ -119,6 +119,8 @@ def select_pixel_indexes(pixel_tensor, n_samples: int = 1_000, stratify=True, st
     counts, _ = np.histogram(fl, bins)
     n_samples_per_bin = (counts * n_samples / len(fl)).astype(int)
 
+    # TODO: we need to add missed indexes to support n_samples per batch
+
     index_buffer = []
     for bin_idx, (left_boundary, right_boundary) in enumerate(boundaries):
         n_samples_in_bin = n_samples_per_bin[bin_idx]
