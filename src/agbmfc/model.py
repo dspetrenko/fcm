@@ -64,6 +64,42 @@ class PixelBLRegressor(TrivialPixelRegressor):
         return logits[:, 0]
 
 
+class PixelMagnitudeSignalRegressor(PixelBLRegressor):
+    def __init__(self, dim=256, seq_len=12, channels=4):
+        super().__init__()
+
+        self.dim = dim
+        self.seq_len = seq_len
+        self.channels = channels
+
+        self.s1_band = torch.nn.Linear(channels, self.dim)
+        self.s1_pos_embedding = torch.nn.Embedding(self.seq_len, self.dim)
+
+        encoder_layer = torch.nn.TransformerEncoderLayer(d_model=self.dim, nhead=8, batch_first=True)
+        self.encoder = torch.nn.TransformerEncoder(encoder_layer, num_layers=4)
+
+        self.magnitude_regressor = torch.nn.Linear(self.dim, 1)
+        self.magnitude_regressor.weight.data.fill_(0.01)
+        self.magnitude_regressor.bias.data.fill_(0.01)
+
+        self.signal_regressor = torch.nn.Linear(self.dim, 1)
+
+    def forward(self, ddict):
+        _device = next(self.parameters()).device
+
+        features = self.s1_band(ddict["bands"] / 100)
+
+        bs = len(ddict["bands"])
+        orders = torch.arange(12).repeat(bs).reshape((bs, self.seq_len)).to(_device)
+        pos_emb = self.s1_pos_embedding(orders)
+
+        assert features.shape == pos_emb.shape
+        out = self.encoder(features + pos_emb)
+        logits = self.magnitude_regressor(out).squeeze(2) + self.signal_regressor(out).squeeze(2)
+
+        return logits[:, 0]
+
+
 def evaluate(model, val_dataloader, device):
     model.eval()
 
