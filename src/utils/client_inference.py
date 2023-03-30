@@ -1,10 +1,19 @@
+import argparse
+
 import requests
 import glob
 from os.path import basename
 
-END_POINT = 'http://localhost:8000/agbmfc/inference'
+argParser = argparse.ArgumentParser()
+argParser.add_argument("-m", "--model_type", help="Model that will be used for prediction",
+                       choices=['baseline-pixel', 'trivial'],
+                       default='trivial')
+args = argParser.parse_args()
+params = {'model_type': args.model_type}
 
-files = sorted(glob.glob(r'data_sample/*S1*.tif'))
+END_POINT = 'http://localhost:8080/agbmfc/inference'
+
+files = sorted(glob.glob(r'data_sample/*S2*.tif'))
 print('files:')
 for file in files:
     print('\t', basename(file))
@@ -17,7 +26,7 @@ for file in files:
         multiple_files.append(('chip_files', (basename(file), fd.read())))
 
 
-r = requests.post(END_POINT, files=multiple_files)
+r = requests.post(END_POINT, files=multiple_files, params=params)
 
 if r.status_code == 200:
     with open('response.tif', 'wb') as fd:

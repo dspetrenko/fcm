@@ -24,7 +24,7 @@ from src.service.db import Base, engine, SessionLocal
 
 from src.agbmfc.model import inference as inference_chip
 from src.agbmfc.model import pickup_model
-from src.agbmfc.loading import read_image_tensor
+from src.agbmfc.loading import read_image_tensor, MISSED_S2_CHIP_TENSOR
 from src.worker import celery_worker, create_inference_task
 
 DATA_PATH = os.path.join('..', 'data')
@@ -61,8 +61,19 @@ async def get_users(db: Session = Depends(get_db)):
 @app.post(r'/agbmfc/inference')
 async def inference(chip_files: list[UploadFile], model_type: Literal['trivial', 'baseline-pixel'] = 'trivial'):
 
-    mem_files = [MemoryFile(await file_data.read()) for file_data in sorted(chip_files, key=lambda x: x.filename)]
+    chip_files = sorted(chip_files, key=lambda x: x.filename)
+    mem_files = [MemoryFile(await file_data.read()) for file_data in chip_files]
     chip_tensors = [read_image_tensor(mf) for mf in mem_files]
+
+    for season_idx in range(0, 12):
+        season_mask = f'_{season_idx:02}.'
+        chip_file = chip_files[season_idx]
+        if season_mask not in chip_file.filename:
+            missed_chip_file = chip_files[0].filename[:-7] + season_mask + chip_files[0].filename[-3:]
+            chip_files.insert(season_idx, missed_chip_file)
+
+            chip_tensors.insert(season_idx, MISSED_S2_CHIP_TENSOR)
+
     image_tensor = torch.stack(chip_tensors)
 
     model = pickup_model(model_type)
@@ -80,13 +91,19 @@ async def inference(chip_files: list[UploadFile], model_type: Literal['trivial',
 @app.post('/agbmfc/inference/task', status_code=201)
 async def inference_task(chip_files: list[UploadFile], model_type: Literal['trivial', 'baseline-pixel'] = 'trivial'):
 
-    mem_files = [MemoryFile(await file_data.read()) for file_data in sorted(chip_files, key=lambda x: x.filename)]
+    chip_files = sorted(chip_files, key=lambda x: x.filename)
+    mem_files = [MemoryFile(await file_data.read()) for file_data in chip_files]
     chip_tensors = [read_image_tensor(mf) for mf in mem_files]
-    image_tensor = torch.stack(chip_tensors)
 
-    # buffer = io.BytesIO()
-    # torch.save(image_tensor, buffer)
-    # image_bytes = buffer.getvalue()
+    for season_idx in range(0, 12):
+        season_mask = f'_{season_idx:02}.'
+        chip_file = chip_files[season_idx]
+        if season_mask not in chip_file.filename:
+            missed_chip_file = chip_files[0].filename[:-7] + season_mask + chip_files[0].filename[-3:]
+            chip_files.insert(season_idx, missed_chip_file)
+
+            chip_tensors.insert(season_idx, MISSED_S2_CHIP_TENSOR)
+    image_tensor = torch.stack(chip_tensors)
 
     task = create_inference_task.delay(image_tensor.numpy().tolist(), model_type)
 

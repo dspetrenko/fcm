@@ -4,7 +4,7 @@ from os.path import basename
 
 END_POINT = 'http://localhost:8000/agbmfc/inference/task'
 
-files = sorted(glob.glob(r'data_sample/*S1*.tif'))
+files = sorted(glob.glob(r'data_sample/*S2*.tif'))
 print('files:')
 for file in files:
     print('\t', basename(file))
