@@ -1,22 +1,11 @@
 from os.path import basename
 import requests
 
+CHIP = 'fed6bb57'
 
-train_files = [
-    'train_features/fed6bb57_S1_00.tif',
-    'train_features/fed6bb57_S1_01.tif',
-    'train_features/fed6bb57_S1_02.tif',
-    'train_features/fed6bb57_S1_03.tif',
-    'train_features/fed6bb57_S1_04.tif',
-    'train_features/fed6bb57_S1_05.tif',
-    'train_features/fed6bb57_S1_06.tif',
-    'train_features/fed6bb57_S1_07.tif',
-    'train_features/fed6bb57_S1_08.tif',
-    'train_features/fed6bb57_S1_09.tif',
-    'train_features/fed6bb57_S1_10.tif',
-    'train_features/fed6bb57_S1_11.tif',
-    'train_agbm/fed6bb57_agbm.tif',
-]
+periods = [f'{idx:02}' for idx in range(12)]
+train_files = [f'train_features/{CHIP}_S2_{period}.tif' for period in periods]
+train_files.append(f'train_agbm/{CHIP}_agbm.tif')
 
 for f in train_files:
     url = rf'https://drivendata-competition-biomassters-public-eu.s3.amazonaws.com/{f}'
