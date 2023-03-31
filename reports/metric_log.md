@@ -5,5 +5,6 @@
 | 572494d5 | Baseline TS         | 53.974094 |         | change batch_size: 1 -> 4                                                                                                                                    |
 | ed201505 | Baseline TS         | 27.185242 | 42.7747 | Pixel ts on S2 data only. optimizer = optim.SGD(model.parameters(), lr=0.000_01, momentum=0.9), n_epoch=18, bs=4 chip. Missed data faked as zero and CLP=255 |
 | 01f7821b | Baseline TS         | 23.128957 | 36.6443 | Add stratification for sampling. optimizer = optim.SGD(model.parameters(), lr=0.000_01, momentum=0.9), n_epoch=18, bs=1 chip.                                |
-| 76540f12 | TS: MagnitudeSignal | 22.950479 | 36.2409 | PixelMagnitudeSignalRegressor. optimizer = optim.SGD(model.parameters(), lr=0.000_01, momentum=0.9), n_epoch=24, bs=1 chip.                                  |
-| 76540f12 | TS: MagnitudeSignal | 21.439113 | 34.2323 | PixelMagnitudeSignalRegressor. optimizer = optim.SGD(model.parameters(), lr=0.000_1, momentum=0.9), n_epoch=24, bs=1 chip.                                   |
+| 76540f12 | TS:[ to correct ]   | 22.950479 | 36.2409 | PixelMagnitudeSignalRegressor. optimizer = optim.SGD(model.parameters(), lr=0.000_01, momentum=0.9), n_epoch=24, bs=1 chip.                                  |
+| 76540f12 | TS:[ to correct ]   | 21.439113 | 34.2323 | PixelMagnitudeSignalRegressor. optimizer = optim.SGD(model.parameters(), lr=0.000_1, momentum=0.9), n_epoch=24, bs=1 chip.                                   |
+| 3d619329 | TS: MagnitudeSignal | 27.911654 | 41.7454 | PixelMagnitudeSignalMultRegressor. optimizer = optim.SGD(model.parameters(), lr=1e-07, momentum=0.9), n_epoch=12, bs=1 chip.                                 |
