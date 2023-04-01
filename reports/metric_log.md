@@ -8,3 +8,4 @@
 | 76540f12 | TS:[ to correct ]   | 22.950479 | 36.2409 | PixelMagnitudeSignalRegressor. optimizer = optim.SGD(model.parameters(), lr=0.000_01, momentum=0.9), n_epoch=24, bs=1 chip.                                  |
 | 76540f12 | TS:[ to correct ]   | 21.439113 | 34.2323 | PixelMagnitudeSignalRegressor. optimizer = optim.SGD(model.parameters(), lr=0.000_1, momentum=0.9), n_epoch=24, bs=1 chip.                                   |
 | 3d619329 | TS: MagnitudeSignal | 27.911654 | 41.7454 | PixelMagnitudeSignalMultRegressor. optimizer = optim.SGD(model.parameters(), lr=1e-07, momentum=0.9), n_epoch=12, bs=1 chip.                                 |
+| 3d619329 | TS: MagnitudeSignal | 24.481165 | 37.8875 | PixelMagnitudeSignalMultRegressor. optimizer = optim.SGD(model.parameters(), lr=1e-06, momentum=0.9), n_epoch=24, bs=1 chip.                                 |
