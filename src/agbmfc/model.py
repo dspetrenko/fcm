@@ -65,6 +65,24 @@ class PixelBLRegressor(TrivialPixelRegressor):
         return logits[:, 0]
 
 
+class PixelBLRegressorTinyInits(PixelBLRegressor):
+    def __init__(self, dim=256, seq_len=12, channels=4):
+        super().__init__()
+
+        self.dim = dim
+        self.seq_len = seq_len
+        self.channels = channels
+
+        self.s1_band = torch.nn.Linear(channels, self.dim)
+        self.s1_pos_embedding = torch.nn.Embedding(self.seq_len, self.dim)
+
+        encoder_layer = torch.nn.TransformerEncoderLayer(d_model=self.dim, nhead=8, batch_first=True)
+        self.encoder = torch.nn.TransformerEncoder(encoder_layer, num_layers=4)
+        self.regressor = torch.nn.Linear(self.dim, 1)
+        self.regressor.weight.data.fill_(0.01)
+        self.regressor.bias.data.fill_(0.01)
+
+
 class PixelMagnitudeSignalRegressor(PixelBLRegressor):
     def __init__(self, dim=256, seq_len=12, channels=4):
         super().__init__()
@@ -135,7 +153,7 @@ class PixelMagnitudeSignalMultRegressor(TrivialPixelRegressor):
 
         magnitude = self.magnitude_regressor(out)
         magnitude = torch.exp(magnitude)
-        logits = self.magnitude_regressor(out).squeeze(2) * magnitude.squeeze(2)
+        logits = self.magnitude_regressor(out).squeeze(2) + magnitude.squeeze(2)
 
         return logits[:, 0]
 
