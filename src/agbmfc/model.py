@@ -158,6 +158,27 @@ class PixelMagnitudeSignalMultRegressor(TrivialPixelRegressor):
         return logits[:, 0]
 
 
+class PixelMagnitudeSignalMultRegressorHonest(PixelMagnitudeSignalMultRegressor):
+
+    def forward(self, ddict):
+        _device = next(self.parameters()).device
+
+        features = self.s2_band(ddict["bands"] / 100)
+
+        bs = len(ddict["bands"])
+        orders = torch.arange(12).repeat(bs).reshape((bs, self.seq_len)).to(_device)
+        pos_emb = self.pos_embedding(orders)
+
+        assert features.shape == pos_emb.shape
+        out = self.encoder(features + pos_emb)
+
+        magnitude = self.magnitude_regressor(out)
+        magnitude = torch.exp(magnitude)
+        logits = self.magnitude_regressor(out).squeeze(2) * magnitude.squeeze(2)
+
+        return logits[:, 0]
+
+
 def evaluate(model, val_dataloader, device):
     model.eval()
 
