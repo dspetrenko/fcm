@@ -65,6 +65,58 @@ class PixelBLRegressor(TrivialPixelRegressor):
         return logits[:, 0]
 
 
+class PixelCls(torch.nn.Module):
+    def __init__(self, dim=256, seq_len=12, channels=4, n_class=256):
+        super().__init__()
+
+        # super().__init__(dim=dim, seq_len=seq_len, channels=channels)
+
+        self.dim = dim
+        self.seq_len = seq_len
+        self.channels = channels
+
+        self.s1_band = torch.nn.Linear(channels, self.dim)
+        self.s1_pos_embedding = torch.nn.Embedding(self.seq_len, self.dim)
+
+        encoder_layer = torch.nn.TransformerEncoderLayer(d_model=self.dim, nhead=8, batch_first=True)
+        self.encoder = torch.nn.TransformerEncoder(encoder_layer, num_layers=4)
+
+        self.n_class = n_class
+
+        self.fc_inner = torch.nn.Linear(dim * seq_len, dim * seq_len // 4)
+        self.fc_outer = torch.nn.Linear(dim * seq_len // 4, self.n_class)
+
+    def forward(self, ddict):
+        _device = next(self.parameters()).device
+
+        features = self.s1_band(ddict["bands"] / 100)
+
+        bs = len(ddict["bands"])
+        orders = torch.arange(12).repeat(bs).reshape((bs, self.seq_len)).to(_device)
+        pos_emb = self.s1_pos_embedding(orders)
+
+        assert features.shape == pos_emb.shape
+        out = self.encoder(features + pos_emb)
+        # print(out.shape, flush=True)
+
+        out = torch.flatten(out, 1)
+        out = F.relu(self.fc_inner(out))
+        logits = self.fc_outer(out)
+
+        return logits
+
+    @staticmethod
+    def loss_fn(prediction, target):
+        loss = torch.nn.CrossEntropyLoss()
+        target = target.round().clip(min=0, max=255)
+        target = target.type(torch.int64)
+
+        # print(prediction.device, prediction.dtype)
+        # print(target.device, target.dtype, target.max())
+
+        return loss(prediction, target)
+
+
 class PixelBLRegressorTinyInits(PixelBLRegressor):
     def __init__(self, dim=256, seq_len=12, channels=4):
         super().__init__()
@@ -195,7 +247,7 @@ def evaluate(model, val_dataloader, device):
             }
             prediction = model(ddict)
 
-            loss = model.loss_fn(target, prediction).item()
+            loss = model.loss_fn(prediction, target).item()
             loss_buffer.append(loss)
 
     mean_loss = np.mean(loss_buffer)
@@ -218,7 +270,7 @@ def train_one_epoch(model, train_dataloader, optimizer, epoch, device="cuda:0", 
         ddict["bands"] = batch
         prediction = model(ddict)
 
-        loss = model.loss_fn(target, prediction)
+        loss = model.loss_fn(prediction, target)
 
         loss.backward()
         optimizer.step()
