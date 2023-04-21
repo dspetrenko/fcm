@@ -281,7 +281,7 @@ def train_one_epoch(model, train_dataloader, optimizer, epoch, device="cuda:0", 
     return losses
 
 
-def inference(model: torch.nn.Module, chip_tensor, batch_size: int = 10_000) -> torch.Tensor:
+def inference(model: torch.nn.Module, chip_tensor, batch_size: int = 10_000, cls: bool = False) -> torch.Tensor:
     if batch_size < 0:
         raise ValueError('Batch size must be zero or positive')
 
@@ -289,7 +289,6 @@ def inference(model: torch.nn.Module, chip_tensor, batch_size: int = 10_000) -> 
     model.eval()
     with torch.no_grad():
         if batch_size:
-            ...
             preds = []
             for batch_tensor in torch.split(pixel_tensor, batch_size, ):
                 ddict = {
@@ -304,6 +303,8 @@ def inference(model: torch.nn.Module, chip_tensor, batch_size: int = 10_000) -> 
             }
             prediction = model(ddict)
 
+    if cls:
+        _, prediction = torch.max(prediction, 1)
     return prediction.reshape(256, 256)
 
 
