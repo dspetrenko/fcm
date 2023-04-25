@@ -11,7 +11,7 @@ _DATABASE_DB = os.getenv('POSTGRES_DB', 'unknown_pg')
 _DATABASE_HOST = os.getenv('POSTGRES_HOST', 'unknown_host')
 
 if _DATABASE_USER == 'unknown':
-    # we didn't pick up .env file, so it mean that we runs loacally as 'python db.py' command
+    # we didn't pick up .env file, so it means that we run locally as 'python db.py' command
     ...
     import pathlib
     path = pathlib.Path(__file__).parent.parent.parent / '.env'
