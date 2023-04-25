@@ -1,6 +1,9 @@
 import numpy as np
 import onnxruntime
 
+MISSED_S2_CHIP_ARRAY = np.zeros((11, 256, 256), dtype=np.float32)
+MISSED_S2_CHIP_ARRAY[10] = 255
+
 _ORT_SESSION = onnxruntime.InferenceSession(r"../models/baseline-model-05.onnx")
 
 
