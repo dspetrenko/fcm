@@ -15,16 +15,13 @@ from sqlalchemy.orm import Session
 
 import prometheus_client
 
-import torch
 from rasterio.io import MemoryFile
 from PIL import Image
 
 from src.service import crud, schemas
 from src.service.db import Base, engine, SessionLocal
 
-from src.agbmfc.model import inference as inference_chip
-from src.agbmfc.model import pickup_model
-from src.agbmfc.loading import read_image_tensor, MISSED_S2_CHIP_TENSOR
+from src.agbmfc.inference import MISSED_S2_CHIP_ARRAY, read_image_as_array, onnx_inference
 from src.worker import celery_worker, create_inference_task
 
 DATA_PATH = os.path.join('..', 'data')
@@ -63,7 +60,7 @@ async def inference(chip_files: list[UploadFile], model_type: Literal['trivial',
 
     chip_files = sorted(chip_files, key=lambda x: x.filename)
     mem_files = [MemoryFile(await file_data.read()) for file_data in chip_files]
-    chip_tensors = [read_image_tensor(mf) for mf in mem_files]
+    chip_tensors = [read_image_as_array(mf) for mf in mem_files]
 
     for season_idx in range(0, 12):
         season_mask = f'_{season_idx:02}.'
@@ -72,14 +69,13 @@ async def inference(chip_files: list[UploadFile], model_type: Literal['trivial',
             missed_chip_file = chip_files[0].filename[:-7] + season_mask + chip_files[0].filename[-3:]
             chip_files.insert(season_idx, missed_chip_file)
 
-            chip_tensors.insert(season_idx, MISSED_S2_CHIP_TENSOR)
+            chip_tensors.insert(season_idx, MISSED_S2_CHIP_ARRAY)
 
-    image_tensor = torch.stack(chip_tensors)
+    image_tensor = np.stack(chip_tensors)
 
-    model = pickup_model(model_type)
-    prediction = inference_chip(model, image_tensor)
+    prediction = onnx_inference(image_tensor)
 
-    img = Image.fromarray(prediction.numpy())
+    img = Image.fromarray(prediction)
     with io.BytesIO() as buffer:
         img.save(buffer, format='tiff')
         img_bytes = buffer.getvalue()
@@ -93,7 +89,7 @@ async def inference_task(chip_files: list[UploadFile], model_type: Literal['triv
 
     chip_files = sorted(chip_files, key=lambda x: x.filename)
     mem_files = [MemoryFile(await file_data.read()) for file_data in chip_files]
-    chip_tensors = [read_image_tensor(mf) for mf in mem_files]
+    chip_tensors = [read_image_as_array(mf) for mf in mem_files]
 
     for season_idx in range(0, 12):
         season_mask = f'_{season_idx:02}.'
@@ -102,10 +98,10 @@ async def inference_task(chip_files: list[UploadFile], model_type: Literal['triv
             missed_chip_file = chip_files[0].filename[:-7] + season_mask + chip_files[0].filename[-3:]
             chip_files.insert(season_idx, missed_chip_file)
 
-            chip_tensors.insert(season_idx, MISSED_S2_CHIP_TENSOR)
-    image_tensor = torch.stack(chip_tensors)
+            chip_tensors.insert(season_idx, MISSED_S2_CHIP_ARRAY)
+    image_tensor = np.stack(chip_tensors)
 
-    task = create_inference_task.delay(image_tensor.numpy().tolist(), model_type)
+    task = create_inference_task.delay(image_tensor.tolist(), model_type)
 
     monitoring.METRIC_STORAGE['created_inference_tasks'].inc()
     return JSONResponse({'task_id': task.id})
