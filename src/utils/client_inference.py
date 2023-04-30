@@ -11,7 +11,7 @@ argParser.add_argument("-m", "--model_type", help="Model that will be used for p
 args = argParser.parse_args()
 params = {'model_type': args.model_type}
 
-END_POINT = 'http://localhost:8080/agbmfc/inference'
+END_POINT = 'http://localhost:8000/agbmfc/inference'
 
 files = sorted(glob.glob(r'data_sample/*S2*.tif'))
 print('files:')
