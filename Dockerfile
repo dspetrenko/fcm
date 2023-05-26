@@ -9,6 +9,7 @@ RUN pip install --upgrade pip \
 
 COPY ./ /app
 
+RUN python startup.py
 
 CMD ["uvicorn", "src.app:app", \
      "--host", "0.0.0.0", \
