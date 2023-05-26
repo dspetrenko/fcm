@@ -9,9 +9,11 @@ import rasterio
 MISSED_S2_CHIP_ARRAY = np.zeros((11, 256, 256), dtype=np.float32)
 MISSED_S2_CHIP_ARRAY[10] = 255
 
+MODEL_NAME = 'baseline-model-05.onnx'
+
 _file_path = Path(os.path.abspath(__file__))
 _project_root = _file_path.parent.parent.parent
-_model_path = _project_root / 'models' / 'baseline-model-05.onnx'
+_model_path = _project_root / 'models' / MODEL_NAME
 
 
 def onnx_inference(chip_tensor: np.ndarray, expected_batch_size: int = 10_000) -> np.ndarray:
