@@ -16,3 +16,4 @@ celery~=5.2.7
 redis~=3.5.3
 prometheus-client~=0.16.0
 onnxruntime~=1.14.1
+boto3~=1.26.139
