@@ -11,15 +11,11 @@ from src import monitoring
 load_dotenv('.env')
 
 from fastapi import FastAPI, Request, Response, Depends, UploadFile
-from sqlalchemy.orm import Session
 
 import prometheus_client
 
 from rasterio.io import MemoryFile
 from PIL import Image
-
-from src.service import crud, schemas
-from src.service.db import Base, engine, SessionLocal
 
 from src.agbmfc.inference import MISSED_S2_CHIP_ARRAY, read_image_as_array, onnx_inference
 from src.worker import celery_worker, create_inference_task
@@ -29,18 +25,7 @@ DATA_PATH = os.path.join('..', 'data')
 PROJECT_TITLE = "Project to solve problem of AGB estimation on satellite images"
 PROJECT_DESC = "This project is a diploma work. "
 
-
-Base.metadata.create_all(bind=engine)
-
 app = FastAPI(title=PROJECT_TITLE, description=PROJECT_DESC)
-
-
-def get_db():
-    db = SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
 
 
 @monitoring.METRIC_STORAGE['echo_request_duration'].time()
@@ -50,14 +35,8 @@ async def hello(request: Request):
     return Response(content=body, status_code=200)
 
 
-@app.get('/users/', response_model=List[schemas.User])
-async def get_users(db: Session = Depends(get_db)):
-    return crud.get_users(db)
-
-
 @app.post(r'/agbmfc/inference')
 async def inference(chip_files: list[UploadFile], model_type: Literal['trivial', 'baseline-pixel'] = 'trivial'):
-
     chip_files = sorted(chip_files, key=lambda x: x.filename)
     mem_files = [MemoryFile(await file_data.read()) for file_data in chip_files]
     chip_tensors = [read_image_as_array(mf) for mf in mem_files]
@@ -86,7 +65,6 @@ async def inference(chip_files: list[UploadFile], model_type: Literal['trivial',
 
 @app.post('/agbmfc/inference/task', status_code=201)
 async def inference_task(chip_files: list[UploadFile], model_type: Literal['trivial', 'baseline-pixel'] = 'trivial'):
-
     chip_files = sorted(chip_files, key=lambda x: x.filename)
     mem_files = [MemoryFile(await file_data.read()) for file_data in chip_files]
     chip_tensors = [read_image_as_array(mf) for mf in mem_files]
@@ -109,7 +87,6 @@ async def inference_task(chip_files: list[UploadFile], model_type: Literal['triv
 
 @app.get('/agbmfc/inference/result')
 async def inference_result(task_id: str):
-
     monitoring.METRIC_STORAGE['requests_to_fetch_inference_result'].inc()
 
     result = celery_worker.AsyncResult(task_id)
