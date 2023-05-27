@@ -6,6 +6,10 @@ on:
   pull_request:
     branches: [ "master" ]
 
+env:
+  YA_SERVICE_KEY_ID: ${{secrets.YA_SERVICE_KEY_ID}}
+  YA_SERVICE_KEY_TOKEN: ${{secrets.YA_SERVICE_KEY_TOKEN}}
+
 jobs:
 
   build:
