@@ -1,22 +1,50 @@
-name: Docker Image CI
+name: FastAPI CI/CD
 
 on:
   push:
-    branches: [ "master" ]
-  pull_request:
-    branches: [ "master" ]
-
-env:
-  YA_SERVICE_KEY_ID: ${{secrets.YA_SERVICE_KEY_ID}}
-  YA_SERVICE_KEY_TOKEN: ${{secrets.YA_SERVICE_KEY_TOKEN}}
+    branches:
+      - master
 
 jobs:
 
-  build:
-
+  deploy:
+    name: Pre-Deploying
     runs-on: ubuntu-latest
-
     steps:
-    - uses: actions/checkout@v3
-    - name: Build the Docker image
-      run: docker build . --file Dockerfile --tag fcm:$(date +%s)
+    - uses: actions/checkout@v2
+    - name: multiple command
+      uses: appleboy/ssh-action@master
+      with:
+        host: ${{ secrets.SSH_HOST }}
+        username: ${{ secrets.SSH_USER }}
+        key: ${{ secrets.SSH_KEY }}
+        script: |
+          sudo apt update
+          sudo apt install apt-transport-https ca-certificates curl software-properties-common
+          docker --version || curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
+          docker ps || sudo add-apt-repository 'deb [arch=amd64] https://download.docker.com/linux/ubuntu focal stable'
+          docker images || apt-cache policy docker-ce
+          docker --help || sudo apt install docker-ce -y
+          docker-compose --help || sudo curl -L "https://github.com/docker/compose/releases/download/1.29.2/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+          docker-compose || sudo chmod +x /usr/local/bin/docker-compose
+          sudo chmod 666 /var/run/docker.sock
+  
+  deploy_ssh:
+    name: Deploying by SSH and Docker
+    needs: deploy
+    continue-on-error: true
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Make envfile
+        uses: SpicyPizza/create-envfile@v1.3
+        with:
+          envkey_API_KEY: ${{ secrets.API_KEY }}
+          
+      - uses: alex-ac/github-action-ssh-docker-compose@master
+        with:
+          ssh_host: ${{ secrets.SSH_HOST }}
+          ssh_private_key: ${{ secrets.SSH_KEY }}
+          ssh_user: ${{ secrets.SSH_USER }}
+          docker_compose_prefix: fastapi_actions_test
+          docker_compose_down: 'true'
