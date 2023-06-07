@@ -4,13 +4,14 @@ import argparse
 
 argParser = argparse.ArgumentParser()
 argParser.add_argument("-i", "--id", help="task id for task")
+argParser.add_argument("-s", "--server", help="localhost or host ip", default='localhost')
 
 args = argParser.parse_args()
 if args.id is None:
     print('Error: id is necessary')
     exit()
 
-END_POINT = f'http://localhost:8000/agbmfc/inference/result?task_id={args.id}'
+END_POINT = f'http://{args.server}:8000/agbmfc/inference/result?task_id={args.id}'
 print(END_POINT)
 
 r = requests.get(END_POINT)
