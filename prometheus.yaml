@@ -16,6 +16,6 @@ scrape_configs:
     static_configs:
     - targets: ['celery-exporter:9808']
 
-  - job_name: "pg-exporter"
+  - job_name: "node-exporter"
     static_configs:
-    - targets: ['pg-exporter:9187']
+    - targets: ['pg-exporter:9100']
