@@ -2,7 +2,15 @@ import requests
 import glob
 from os.path import basename
 
-END_POINT = 'http://localhost:8000/agbmfc/inference/task'
+import argparse
+
+argParser = argparse.ArgumentParser()
+argParser.add_argument("-s", "--server", help="localhost or host ip", default='localhost')
+
+args = argParser.parse_args()
+
+END_POINT = f'http://{args.server}:8000/agbmfc/inference/task'
+
 
 files = sorted(glob.glob(r'data_sample/*S2*.tif'))
 print('files:')
