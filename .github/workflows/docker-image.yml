@@ -41,6 +41,8 @@ jobs:
         with:
           envkey_YA_SERVICE_KEY_ID: ${{ secrets.YA_SERVICE_KEY_ID }}
           envkey_YA_SERVICE_KEY_TOKEN: ${{ secrets.YA_SERVICE_KEY_TOKEN }}
+          envkey_GF_SECURITY_ADMIN_USER: ${{ secrets.GF_SECURITY_ADMIN_USER }}
+          envkey_GF_SECURITY_ADMIN_PASSWORD: ${{ secrets.GF_SECURITY_ADMIN_PASSWORD }}
           
       - uses: alex-ac/github-action-ssh-docker-compose@master
         with:
