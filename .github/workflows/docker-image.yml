@@ -61,7 +61,7 @@ jobs:
             key: ${{ secrets.SSH_KEY }}
             overwrite: 'true'
             source: ./grafana/provisioning/
-            target: ~/grafana/provisioning/
+            target: ~/
             
       - uses: actions/checkout@v2
       - name: CP Grafana configs into container
