@@ -51,6 +51,7 @@ jobs:
           ssh_user: ${{ secrets.SSH_USER }}
           docker_compose_prefix: fcm
           docker_compose_down: 'true'
+          workspace_keep: 'true'
   setup-grafana:
     name: Set-Up Grafana
     runs-on: ubuntu-latest
