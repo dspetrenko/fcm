@@ -51,20 +51,24 @@ jobs:
           ssh_user: ${{ secrets.SSH_USER }}
           docker_compose_prefix: fcm
           docker_compose_down: 'true'
-          workspace_keep: 'true'
-  setup-grafana:
-    name: Set-Up Grafana
-    runs-on: ubuntu-latest
-    needs: deploy_ssh
-    steps:
-    - uses: actions/checkout@v2
-    - name: multiple command
-      uses: appleboy/ssh-action@master
-      with:
-        host: ${{ secrets.SSH_HOST }}
-        username: ${{ secrets.SSH_USER }}
-        key: ${{ secrets.SSH_KEY }}
-        script: |
-          ls -lh |
-          echo "END"
+      
+      - uses: actions/checkout@v3
+      - name: SCP grafana configs 
+        uses: appleboy/scp-action@v0.0.1
+        with: 
+            host:  ${{ secrets.SSH_HOST }}
+            username: ${{ secrets.SSH_USER }}
+            key: ${{ secrets.SSH_KEY }}
+            source: ./grafana/provisioning/
+            target: ~/grafana/provisioning/
+            
+      - uses: actions/checkout@v2
+      - name: multiple command
+        uses: appleboy/ssh-action@master
+        with:
+            host: ${{ secrets.SSH_HOST }}
+            username: ${{ secrets.SSH_USER }}
+            key: ${{ secrets.SSH_KEY }}
+            script: |
+              docker cp ./grafana/provisioning/ fcm_grafana_1:/etc/grafana/provisioning/
           
