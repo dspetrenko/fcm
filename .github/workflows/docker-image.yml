@@ -54,6 +54,7 @@ jobs:
   setup-grafana:
     name: Set-Up Grafana
     runs-on: ubuntu-latest
+    needs: deploy_ssh
     steps:
     - uses: actions/checkout@v2
     - name: multiple command
