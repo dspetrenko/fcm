@@ -59,6 +59,7 @@ jobs:
             host:  ${{ secrets.SSH_HOST }}
             username: ${{ secrets.SSH_USER }}
             key: ${{ secrets.SSH_KEY }}
+            overwrite: 'true'
             source: ./grafana/provisioning/
             target: ~/grafana/provisioning/
             
