@@ -51,3 +51,18 @@ jobs:
           ssh_user: ${{ secrets.SSH_USER }}
           docker_compose_prefix: fcm
           docker_compose_down: 'true'
+  setup-grafana:
+    name: Set-Up Grafana
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - name: multiple command
+      uses: appleboy/ssh-action@master
+      with:
+        host: ${{ secrets.SSH_HOST }}
+        username: ${{ secrets.SSH_USER }}
+        key: ${{ secrets.SSH_KEY }}
+        script: |
+          ls -lh |
+          echo "END"
+          
