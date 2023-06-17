@@ -43,33 +43,41 @@ jobs:
           envkey_YA_SERVICE_KEY_TOKEN: ${{ secrets.YA_SERVICE_KEY_TOKEN }}
           envkey_GF_SECURITY_ADMIN_USER: ${{ secrets.GF_SECURITY_ADMIN_USER }}
           envkey_GF_SECURITY_ADMIN_PASSWORD: ${{ secrets.GF_SECURITY_ADMIN_PASSWORD }}
-          
-      - uses: alex-ac/github-action-ssh-docker-compose@master
-        with:
-          ssh_host: ${{ secrets.SSH_HOST }}
-          ssh_private_key: ${{ secrets.SSH_KEY }}
-          ssh_user: ${{ secrets.SSH_USER }}
-          docker_compose_prefix: fcm
-          docker_compose_down: 'true'
       
-      - uses: actions/checkout@v3
-      - name: SCP grafana configs 
-        uses: appleboy/scp-action@v0.1.4
-        with: 
-            host:  ${{ secrets.SSH_HOST }}
-            username: ${{ secrets.SSH_USER }}
-            key: ${{ secrets.SSH_KEY }}
-            overwrite: 'true'
-            source: ./grafana/provisioning/
-            target: ~/
-            
-      - uses: actions/checkout@v2
-      - name: CP Grafana configs into container
-        uses: appleboy/ssh-action@master
+      - name: Clean up artifacts
+        uses: appleboy/ssh-action@v0.1.8
+        if: always()
         with:
-            host: ${{ secrets.SSH_HOST }}
-            username: ${{ secrets.SSH_USER }}
-            key: ${{ secrets.SSH_KEY }}
-            script: |
-              docker cp ./grafana/provisioning/ fcm_grafana_1:/etc/grafana/provisioning/
-          
+          host: ${{ secrets.HOST }}
+          username: ${{ secrets.USERNAME }}
+          key: ${{ secrets.KEY }}
+          script_stop: true
+          script: rm -rf ${{ github.event.repository.name }}      
+      
+      - name: Clone repository
+        uses: appleboy/ssh-action@v0.1.8
+        with:
+          host: ${{ secrets.HOST }}
+          username: ${{ secrets.USERNAME }}
+          key: ${{ secrets.KEY }}
+          script_stop: true
+          script: |
+            git clone \
+              -b ${{ github.ref_name }} \
+              --depth=1 \
+              --single-branch \
+              git@github.com:${{ github.repository }}.git ${{ github.event.repository.name }}
+              
+      - name: Re-run containers 
+        uses: appleboy/ssh-action@v0.1.8
+        with:
+          host: ${{ secrets.HOST }}
+          username: ${{ secrets.USERNAME }}
+          key: ${{ secrets.KEY }}
+          script_stop: true
+          script: |
+           cd  ${{ github.event.repository.name }} |
+           docker compose down |
+           docker compose up --build --detach
+      
+
