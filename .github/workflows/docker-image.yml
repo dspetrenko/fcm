@@ -59,15 +59,18 @@ jobs:
               --single-branch \
               https://github.com/dspetrenko/fcm.git
 
-      - uses: actions/checkout@v2
-      - name: Make envfile
-        uses: SpicyPizza/create-envfile@v1.3
+      - name: Create .env
+        uses: appleboy/ssh-action@v0.1.8
         with:
-          directory: ~/fcm
-          envkey_YA_SERVICE_KEY_ID: ${{ secrets.YA_SERVICE_KEY_ID }}
-          envkey_YA_SERVICE_KEY_TOKEN: ${{ secrets.YA_SERVICE_KEY_TOKEN }}
-          envkey_GF_SECURITY_ADMIN_USER: ${{ secrets.GF_SECURITY_ADMIN_USER }}
-          envkey_GF_SECURITY_ADMIN_PASSWORD: ${{ secrets.GF_SECURITY_ADMIN_PASSWORD }}
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_KEY }}
+          script_stop: true
+          script: |
+            echo 'YA_SERVICE_KEY_ID=${{ secrets.YA_SERVICE_KEY_ID }}' >> fcm/.env
+            echo 'YA_SERVICE_KEY_TOKEN=${{ secrets.YA_SERVICE_KEY_TOKEN }}' >> fcm/.env
+            echo 'GF_SECURITY_ADMIN_USER=${{ secrets.GF_SECURITY_ADMIN_USER }}' >> fcm/.env
+            echo 'GF_SECURITY_ADMIN_PASSWORD=${{ secrets.GF_SECURITY_ADMIN_PASSWORD }}' >> fcm/.env
               
       - name: Re-run containers 
         uses: appleboy/ssh-action@v0.1.8
