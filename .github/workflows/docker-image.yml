@@ -63,7 +63,7 @@ jobs:
       - name: Make envfile
         uses: SpicyPizza/create-envfile@v1.3
         with:
-          directory: fcm
+          directory: ~/fcm
           envkey_YA_SERVICE_KEY_ID: ${{ secrets.YA_SERVICE_KEY_ID }}
           envkey_YA_SERVICE_KEY_TOKEN: ${{ secrets.YA_SERVICE_KEY_TOKEN }}
           envkey_GF_SECURITY_ADMIN_USER: ${{ secrets.GF_SECURITY_ADMIN_USER }}
